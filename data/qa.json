@@ -1,4 +1,14 @@
 {
-  "question": "4 + 4",
-  "expected_answer": "8"
+  "questions": [
+    {
+      "question": "4 + 4",
+      "expected_answer": "8",
+      "category": "Arithmetic"
+    },
+    {
+      "question": "10 - 2",
+      "expected_answer": "8",
+      "category": "Arithmetic"
+    }
+  ]
 }
