@@ -86,4 +86,32 @@ with st.container():
         with st.form(key="answer_form", clear_on_submit=True):
             user_answer = st.text_input("Enter your answer here:")
             submit_button = st.form_submit_button("Submit Answer")
-            if submit_button
+            if submit_button:
+                feedback = simulated_ai_analysis(
+                    current_q.get("question", ""),
+                    current_q.get("expected_answer", ""),
+                    user_answer
+                )
+                st.session_state.last_feedback = feedback
+                st.session_state.answer_submitted = True
+                # Update counters based on answer evaluation
+                try:
+                    expected = eval(current_q.get("question", ""))
+                    if str(expected) == user_answer.strip():
+                        st.session_state.correct += 1
+                    else:
+                        st.session_state.wrong += 1
+                except Exception:
+                    if current_q.get("expected_answer", "").strip() == user_answer.strip():
+                        st.session_state.correct += 1
+                    else:
+                        st.session_state.wrong += 1
+                st.session_state.completed += 1
+
+    # If the answer has been submitted, show feedback and a Next Question button
+    else:
+        st.markdown(st.session_state.last_feedback)
+        if st.button("Next Question", key="next_question"):
+            st.session_state.current_index += 1
+            st.session_state.answer_submitted = False
+            st.session_state.last_feedback = ""
