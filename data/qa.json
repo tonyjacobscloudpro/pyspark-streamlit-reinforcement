@@ -9,6 +9,11 @@
       "question": "10 - 2",
       "expected_answer": "8",
       "category": "Arithmetic"
+    },
+    {
+      "question": "5 * 3",
+      "expected_answer": "15",
+      "category": "Arithmetic"
     }
   ]
 }
