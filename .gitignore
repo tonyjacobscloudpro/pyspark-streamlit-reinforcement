@@ -1,0 +1,15 @@
+# Ignore Python virtual environments
+venv/
+__pycache__/
+*.pyc
+
+# Streamlit cache
+.streamlit/config.toml
+.streamlit/*.json
+
+# OS and editor files
+.DS_Store
+*.swp
+
+# VS Code settings (optional)
+.vscode/
