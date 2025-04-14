@@ -72,7 +72,7 @@ def simulated_ai_analysis(question, expected_answer, user_answer):
         else:
             return f"Simulated AI Analysis: The expected answer is {expected_result}, but you entered {user_answer}."
     except Exception:
-        # For non-arithmetic questions, perform a simple string comparison (ignoring whitespace)
+        # Fallback for non-arithmetic questions
         if expected_answer.strip() == user_answer.strip():
             return "Simulated AI Analysis: Your answer is correct!"
         else:
@@ -81,12 +81,13 @@ def simulated_ai_analysis(question, expected_answer, user_answer):
 # --- Bottom Section: Answer Panel ---
 with st.container():
     st.header("Answer Panel")
+    
     # Display counters
     st.markdown(
         f"**Questions Completed:** {st.session_state.completed} &emsp; **Correct:** {st.session_state.correct} &emsp; **Wrong:** {st.session_state.wrong}"
     )
     
-    # Answer input and submission area. Disable the input if an answer has been submitted for this question.
+    # Answer input and submission area
     if not st.session_state.answer_submitted:
         user_answer = st.text_input("Enter your answer here:", key="user_answer")
         if st.button("Submit Answer"):
@@ -96,7 +97,7 @@ with st.container():
             st.session_state.last_feedback = feedback
             st.session_state.answer_submitted = True
 
-            # Update counters based on result (using simple matching for evaluation)
+            # Update counters based on result using eval for arithmetic questions
             try:
                 expected = eval(current_q.get("question", ""))
                 if str(expected) == user_answer.strip():
@@ -111,19 +112,11 @@ with st.container():
                     st.session_state.wrong += 1
 
             st.session_state.completed += 1
-            st.experimental_rerun()  # Rerun to update the UI with feedback
     else:
         st.markdown(st.session_state.last_feedback)
-        # Provide a "Next Question" button to proceed
         if st.button("Next Question"):
             st.session_state.current_index += 1
             st.session_state.answer_submitted = False
             st.session_state.last_feedback = ""
-            st.experimental_rerun()
-
-# Display final counters if all questions are completed
-if st.session_state.current_index >= len(questions):
-    st.write("You have completed all questions!")
-    st.write(f"Questions Completed: {st.session_state.completed}")
-    st.write(f"Correct Answers: {st.session_state.correct}")
-    st.write(f"Wrong Answers: {st.session_state.wrong}")
+            
+            # No need for experimental_rerun; the widget interaction already triggers a re-run.
