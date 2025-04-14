@@ -1,0 +1,19 @@
+{
+  "name": "Pyspark Reinforcement",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "postCreateCommand": "pip install -r requirements.txt",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "portsAttributes": {
+    "8000": {
+      "label": "Streamlit",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postStartCommand": "streamlit run app.py --server.port 8000 --server.address 0.0.0.0"
+}
