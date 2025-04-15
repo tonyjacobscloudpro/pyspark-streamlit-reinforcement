@@ -1,19 +1,15 @@
 {
   "questions": [
     {
-      "question": "4 + 4",
-      "expected_answer": "8",
-      "category": "Arithmetic"
-    },
+      "question": "How do you create a PySpark DataFrame from a list of tuples and display its content?",
+      "expected_answer": "data = [\n    (\"Tony\", 50, 400000),\n    (\"Brandy\", 48, 400000),\n    (\"Sarah\", 46, 300000)\n]\n\ncolumns = (\"Name\", \"Age\", \"Salary\")\ndf = spark.createDataFrame(data, columns)\ndf.show()",
+      "category": "PySpark"
+    }  
     {
-      "question": "10 - 2",
-      "expected_answer": "8",
-      "category": "Arithmetic"
-    },
-    {
-      "question": "5 * 3",
-      "expected_answer": "15",
-      "category": "Arithmetic"
+      "question": "How do you create a SparkSession in PySpark?",
+      "expected_answer": "from pyspark.sql import SparkSession\n\nspark = SparkSession.builder\\\n    .appName(\"Test\")\\\n    .getOrCreate()\n\nprint(\"Spark session created.\")",
+      "category": "PySpark"
     }
   ]
 }
+
