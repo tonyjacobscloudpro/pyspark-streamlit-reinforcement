@@ -54,9 +54,17 @@ current_q = questions[current_index]
 
 # --- Top Section: Question Panel ---
 with st.container():
-    st.header("Question Panel")
-    st.write(f"**Category:** {current_q.get('category', 'General')}")
-    st.write(f"**Question:** {current_q.get('question', 'No question provided.')}")
+    # Custom HTML to add a background color and some padding
+    st.markdown(
+        f"""
+        <div style="background-color: #e0f7fa; padding: 15px; border-radius: 5px;">
+            <h3>Question Panel</h3>
+            <p><strong>Category:</strong> {current_q.get('category', 'General')}</p>
+            <p><strong>Question:</strong> {current_q.get('question', 'No question provided.')}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # Simulated AI analysis function
 def simulated_ai_analysis(question, expected_answer, user_answer):
@@ -72,53 +80,50 @@ def simulated_ai_analysis(question, expected_answer, user_answer):
         if expected_answer.strip() == user_answer.strip():
             return "Simulated AI: Your answer is correct!"
         else:
-            return f"Simulated AI: The expected answer was '{expected_answer}', but you entered '{user_answer}'."
-
-# Callback for the Submit Answer button
-def submit_answer():
-    current_q = questions[st.session_state.current_index]
-    user_ans = st.session_state.user_answer
-    feedback = simulated_ai_analysis(
-        current_q.get("question", ""),
-        current_q.get("expected_answer", ""),
-        user_ans
-    )
-    st.session_state.last_feedback = feedback
-    st.session_state.answer_submitted = True
-    # Update counters based on answer evaluation
-    try:
-        expected = eval(current_q.get("question", ""))
-        if str(expected) == user_ans.strip():
-            st.session_state.correct += 1
-        else:
-            st.session_state.wrong += 1
-    except Exception:
-        if current_q.get("expected_answer", "").strip() == user_ans.strip():
-            st.session_state.correct += 1
-        else:
-            st.session_state.wrong += 1
-    st.session_state.completed += 1
-
-# Callback for the Next Question button
-def next_question():
-    st.session_state.current_index += 1
-    st.session_state.answer_submitted = False
-    st.session_state.last_feedback = ""
-    st.session_state.user_answer = ""  # Clear the answer field
+            return f"Simulated AI: The expected answer was:\n{expected_answer}"
 
 # --- Bottom Section: Answer Panel ---
 with st.container():
     st.header("Answer Panel")
-    # Display counters
+    # Display current counters
     st.markdown(
         f"**Questions Completed:** {st.session_state.completed} &emsp; "
         f"**Correct:** {st.session_state.correct} &emsp; **Wrong:** {st.session_state.wrong}"
     )
-    
+
     if not st.session_state.answer_submitted:
-        # Answer input and submit button
-        st.text_input("Enter your answer here:", key="user_answer")
-        st.button("Submit Answer", on_click=submit_answer, key="submit_answer")
+        # Use a larger text area for code input (height in pixels can be adjusted)
+        st.text_area("Enter your answer here:", key="user_answer", height=200)
+        if st.button("Submit Answer", key="submit_answer"):
+            feedback = simulated_ai_analysis(
+                current_q.get("question", ""),
+                current_q.get("expected_answer", ""),
+                st.session_state.user_answer
+            )
+            st.session_state.last_feedback = feedback
+            st.session_state.answer_submitted = True
+            # Update counters based on answer evaluation
+            try:
+                expected = eval(current_q.get("question", ""))
+                if str(expected) == st.session_state.user_answer.strip():
+                    st.session_state.correct += 1
+                else:
+                    st.session_state.wrong += 1
+            except Exception:
+                if current_q.get("expected_answer", "").strip() == st.session_state.user_answer.strip():
+                    st.session_state.correct += 1
+                else:
+                    st.session_state.wrong += 1
+            st.session_state.completed += 1
+
     else:
+        # Show feedback from simulated AI
         st.markdown(st.session_state.last_feedback)
-        st.button("Next Question", on_click=next_question, key="next_question")
+        # Display the expected answer code nicely formatted
+        with st.expander("Show Expected Answer Code"):
+            st.code(current_q.get("expected_answer", ""), language="python")
+        if st.button("Next Question", key="next_question"):
+            st.session_state.current_index += 1
+            st.session_state.answer_submitted = False
+            st.session_state.last_feedback = ""
+            st.session_state.user_answer = ""
