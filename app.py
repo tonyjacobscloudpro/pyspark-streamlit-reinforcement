@@ -4,7 +4,7 @@ import json
 st.title("PySpark-Streamlit-Reinforcement POC")
 st.write(
     "This is a POC for a PySpark Tutorial web app with multiple questions loaded from a JSON file. "
-    "A simulated AI analyzes your answers."
+    "A simulated AI analyzes your answers.  Real AI a bit pricey at moment."
 )
 
 # -------------------------------
