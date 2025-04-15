@@ -39,8 +39,6 @@ if "answer_submitted" not in st.session_state:
     st.session_state.answer_submitted = False
 if "last_feedback" not in st.session_state:
     st.session_state.last_feedback = ""
-if "user_answer" not in st.session_state:
-    st.session_state.user_answer = ""
 
 current_index = st.session_state.current_index
 if current_index >= len(questions):
@@ -52,9 +50,8 @@ if current_index >= len(questions):
 
 current_q = questions[current_index]
 
-# --- Top Section: Question Panel ---
+# --- Top Section: Question Panel (with colored background) ---
 with st.container():
-    # Custom HTML to add a background color and some padding
     st.markdown(
         f"""
         <div style="background-color: #e0f7fa; padding: 15px; border-radius: 5px;">
@@ -90,40 +87,38 @@ with st.container():
         f"**Questions Completed:** {st.session_state.completed} &emsp; "
         f"**Correct:** {st.session_state.correct} &emsp; **Wrong:** {st.session_state.wrong}"
     )
-
+    
     if not st.session_state.answer_submitted:
-        # Use a larger text area for code input (height in pixels can be adjusted)
-        st.text_area("Enter your answer here:", key="user_answer", height=200)
-        if st.button("Submit Answer", key="submit_answer"):
-            feedback = simulated_ai_analysis(
-                current_q.get("question", ""),
-                current_q.get("expected_answer", ""),
-                st.session_state.user_answer
-            )
-            st.session_state.last_feedback = feedback
-            st.session_state.answer_submitted = True
-            # Update counters based on answer evaluation
-            try:
-                expected = eval(current_q.get("question", ""))
-                if str(expected) == st.session_state.user_answer.strip():
-                    st.session_state.correct += 1
-                else:
-                    st.session_state.wrong += 1
-            except Exception:
-                if current_q.get("expected_answer", "").strip() == st.session_state.user_answer.strip():
-                    st.session_state.correct += 1
-                else:
-                    st.session_state.wrong += 1
-            st.session_state.completed += 1
-
+        with st.form(key="answer_form", clear_on_submit=True):
+            user_answer = st.text_area("Enter your answer here:", key="user_answer", height=200)
+            submit_button = st.form_submit_button("Submit Answer")
+            if submit_button:
+                feedback = simulated_ai_analysis(
+                    current_q.get("question", ""),
+                    current_q.get("expected_answer", ""),
+                    user_answer
+                )
+                st.session_state.last_feedback = feedback
+                st.session_state.answer_submitted = True
+                # Update counters based on answer evaluation
+                try:
+                    expected = eval(current_q.get("question", ""))
+                    if str(expected) == user_answer.strip():
+                        st.session_state.correct += 1
+                    else:
+                        st.session_state.wrong += 1
+                except Exception:
+                    if current_q.get("expected_answer", "").strip() == user_answer.strip():
+                        st.session_state.correct += 1
+                    else:
+                        st.session_state.wrong += 1
+                st.session_state.completed += 1
     else:
-        # Show feedback from simulated AI
         st.markdown(st.session_state.last_feedback)
-        # Display the expected answer code nicely formatted
+        # Display the expected answer code block for reference
         with st.expander("Show Expected Answer Code"):
             st.code(current_q.get("expected_answer", ""), language="python")
         if st.button("Next Question", key="next_question"):
             st.session_state.current_index += 1
             st.session_state.answer_submitted = False
             st.session_state.last_feedback = ""
-            st.session_state.user_answer = ""
