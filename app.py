@@ -7,7 +7,9 @@ st.write(
     "A simulated AI analyzes your answers."
 )
 
-# Function to load questions data from a JSON file
+# -------------------------------
+# Load Question Data from JSON
+# -------------------------------
 @st.cache_resource(show_spinner=False)
 def load_question_data(file_path):
     try:
@@ -26,7 +28,9 @@ if not qa_data or "questions" not in qa_data:
 
 questions = qa_data["questions"]
 
-# Initialize session state for quiz progress if not already set
+# -------------------------------
+# Initialize Session State
+# -------------------------------
 if "current_index" not in st.session_state:
     st.session_state.current_index = 0
 if "completed" not in st.session_state:
@@ -52,7 +56,9 @@ if current_index >= len(questions):
 
 current_q = questions[current_index]
 
-# --- Top Section: Question Panel ---
+# -------------------------------
+# Top Section: Question Panel
+# -------------------------------
 with st.container():
     st.markdown(
         f"""
@@ -65,27 +71,21 @@ with st.container():
         unsafe_allow_html=True,
     )
 
-# Helper function to validate PySpark code based on required tokens.
+# -------------------------------
+# Helper Functions
+# -------------------------------
 def validate_pyspark_code(question_text, user_code):
     # For a DataFrame creation question, require spark.createDataFrame and df.show(
     if "DataFrame" in question_text:
         required_tokens = ["spark.createDataFrame", "df.show("]
-        for token in required_tokens:
-            if token not in user_code:
-                return False
-        return True
+        return all(token in user_code for token in required_tokens)
     # For a SparkSession question, require SparkSession.builder and getOrCreate
     elif "SparkSession" in question_text:
         required_tokens = ["SparkSession.builder", "getOrCreate"]
-        for token in required_tokens:
-            if token not in user_code:
-                return False
-        return True
-    # Otherwise, do a simple equality check (fallback)
+        return all(token in user_code for token in required_tokens)
     else:
         return user_code.strip() == current_q.get("expected_answer", "").strip()
 
-# Updated simulated AI analysis function that branches based on question category.
 def simulated_ai_analysis(question, expected_answer, user_answer, category):
     if category == "Arithmetic":
         try:
@@ -95,20 +95,57 @@ def simulated_ai_analysis(question, expected_answer, user_answer, category):
             else:
                 return f"Simulated AI: The expected answer is {expected_result}, but you entered {user_answer}."
         except Exception:
-            return "Simulated AI: Unable to evaluate the arithmetic expression. Please check your input."
+            return "Simulated AI: Could not evaluate the arithmetic expression."
     elif category == "PySpark":
         if validate_pyspark_code(question, user_answer):
             return "Simulated AI: Your PySpark code appears correct!"
         else:
-            return f"Simulated AI: Your PySpark code is incorrect. Please ensure your code contains the necessary commands."
+            return "Simulated AI: Your PySpark code is incorrect. Please check your code."
     else:
-        # Fallback simple check for any other question category
-        if expected_answer.strip() == user_answer.strip():
-            return "Simulated AI: Your answer is correct!"
-        else:
-            return f"Simulated AI: The expected answer was:\n{expected_answer}"
+        return "Simulated AI: Your answer is correct!" if expected_answer.strip() == user_answer.strip() else f"Simulated AI: Incorrect! Expected answer: {expected_answer}"
 
-# --- Bottom Section: Answer Panel ---
+def submit_answer_callback():
+    user_answer = st.session_state.user_answer
+    category = current_q.get("category", "General")
+    feedback = simulated_ai_analysis(
+        current_q.get("question", ""),
+        current_q.get("expected_answer", ""),
+        user_answer,
+        category
+    )
+    st.session_state.last_feedback = feedback
+    st.session_state.answer_submitted = True
+
+    if category == "Arithmetic":
+        try:
+            expected = eval(current_q.get("question", ""))
+            if str(expected) == user_answer.strip():
+                st.session_state.correct += 1
+            else:
+                st.session_state.wrong += 1
+        except Exception:
+            st.session_state.wrong += 1
+    elif category == "PySpark":
+        if validate_pyspark_code(current_q.get("question", ""), user_answer):
+            st.session_state.correct += 1
+        else:
+            st.session_state.wrong += 1
+    else:
+        if current_q.get("expected_answer", "").strip() == user_answer.strip():
+            st.session_state.correct += 1
+        else:
+            st.session_state.wrong += 1
+    st.session_state.completed += 1
+
+def next_question_callback():
+    st.session_state.current_index += 1
+    st.session_state.answer_submitted = False
+    st.session_state.last_feedback = ""
+    st.session_state.user_answer = ""
+
+# -------------------------------
+# Bottom Section: Answer Panel
+# -------------------------------
 with st.container():
     st.header("Answer Panel")
     st.markdown(
@@ -117,46 +154,11 @@ with st.container():
     )
     
     if not st.session_state.answer_submitted:
-        with st.form(key="answer_form", clear_on_submit=True):
-            st.text_area("Enter your answer here:", key="user_answer", height=200)
-            submit_button = st.form_submit_button("Submit Answer")
-            if submit_button:
-                category = current_q.get("category", "General")
-                feedback = simulated_ai_analysis(
-                    current_q.get("question", ""),
-                    current_q.get("expected_answer", ""),
-                    st.session_state.user_answer,
-                    category
-                )
-                st.session_state.last_feedback = feedback
-                st.session_state.answer_submitted = True
-                # Update counters based on answer validation
-                if category == "Arithmetic":
-                    try:
-                        expected = eval(current_q.get("question", ""))
-                        if str(expected) == st.session_state.user_answer.strip():
-                            st.session_state.correct += 1
-                        else:
-                            st.session_state.wrong += 1
-                    except Exception:
-                        st.session_state.wrong += 1
-                elif category == "PySpark":
-                    if validate_pyspark_code(current_q.get("question", ""), st.session_state.user_answer):
-                        st.session_state.correct += 1
-                    else:
-                        st.session_state.wrong += 1
-                else:
-                    if current_q.get("expected_answer", "").strip() == st.session_state.user_answer.strip():
-                        st.session_state.correct += 1
-                    else:
-                        st.session_state.wrong += 1
-                st.session_state.completed += 1
+        # Use a simple text area (outside a form) and a button with an on_click callback.
+        st.text_area("Enter your answer here:", key="user_answer", height=200)
+        st.button("Submit Answer", on_click=submit_answer_callback, key="submit_answer")
     else:
         st.markdown(st.session_state.last_feedback)
         with st.expander("Show Expected Answer Code"):
             st.code(current_q.get("expected_answer", ""), language="python")
-        if st.button("Next Question", key="next_question"):
-            st.session_state.current_index += 1
-            st.session_state.answer_submitted = False
-            st.session_state.last_feedback = ""
-            st.session_state.user_answer = ""
+        st.button("Next Question", on_click=next_question_callback, key="next_question")
